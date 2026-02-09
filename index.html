@@ -442,7 +442,7 @@
         <input type="text" id="signVille" placeholder="Ville" readonly style="background:#f0f2f5;cursor:not-allowed;">
       </div>
       <div class="field">
-        <label>Le</label>
+        <label>Le </label>
         <input type="date" id="signDate" readonly style="background:#f0f2f5;cursor:not-allowed;">
       </div>
     </div>
@@ -795,7 +795,11 @@ function clearSavedData() { if (confirm('Supprimer toutes les données enregistr
 // ============================================================
 function getPdfFilename() {
   const dateFile = v('matchDate').replace(/-/g,'');
-  return `NoteDeFrais_${dateFile}_${v('categorie')||'MATCH'}_${(v('matchLieu')||'Lieu').replace(/\s/g,'')}_vs_${(v('equipeVisiteuse')||'Vis').replace(/\s/g,'')}_${v('nom')}_${v('prenom')}.pdf`;
+  const lieu = (v('matchLieu')||'Lieu').replace(/[\s-]+/g,'');
+  const vis = (v('equipeVisiteuse')||'Vis').replace(/[\s-]+/g,'');
+  const nom = (v('nom')||'Nom').replace(/[\s]+/g,'');
+  const prenom = (v('prenom')||'Prenom').replace(/[\s-]+/g,'');
+  return `NoteDeFrais_${dateFile}_${v('categorie')||'MATCH'}_${lieu}_vs_${vis}_${nom}_${prenom}.pdf`;
 }
 
 // ============================================================
@@ -857,12 +861,12 @@ function generatePDF() {
   const doc = buildPDF();
   const filename = getPdfFilename();
 
-  // Ouvrir le PDF dans un nouvel onglet pour le visualiser
+  // Télécharger avec le bon nom d'abord
+  doc.save(filename);
+
+  // Puis ouvrir pour visualiser
   const blobUrl = doc.output('bloburl');
   window.open(blobUrl, '_blank');
-
-  // Aussi le télécharger
-  doc.save(filename);
 
   showToast('📄 PDF généré et ouvert !');
 }
