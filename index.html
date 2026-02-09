@@ -193,7 +193,32 @@
     border-radius: 8px; border: 2px solid var(--accent-light); text-align: center;
   }
   .fee-display .label { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); font-weight: 700; }
-  .fee-display .amount { font-family: 'Space Mono', monospace; font-size: 36px; font-weight: 700; color: var(--primary); margin-top: 4px; }
+  .fee-edit {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    margin-top: 6px;
+  }
+  .fee-input {
+    font-family: 'Space Mono', monospace;
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--primary);
+    text-align: center;
+    border: 2px dashed transparent;
+    background: transparent;
+    width: 140px;
+    padding: 4px 8px;
+    border-radius: 8px;
+    transition: border-color 0.2s;
+    -moz-appearance: textfield;
+  }
+  .fee-input::-webkit-outer-spin-button,
+  .fee-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .fee-input:hover { border-color: var(--border); }
+  .fee-input:focus { border-color: var(--accent-light); background: #fff; outline: none; box-shadow: 0 0 0 3px rgba(50,130,184,0.15); }
+  .fee-currency { font-family: 'Space Mono', monospace; font-size: 36px; font-weight: 700; color: var(--primary); }
   .fee-display .detail { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
 
   .signature-area {
@@ -286,7 +311,7 @@
     <div class="field">
       <label>Lieu (Patinoire)</label>
       <div class="autocomplete-wrap">
-        <input type="text" id="matchLieu" placeholder="Tapez une ville…" autocomplete="off" oninput="document.getElementById('signVille').value=this.value">
+        <input type="text" id="matchLieu" placeholder="Ex : Grenoble, Annecy…" autocomplete="off" oninput="document.getElementById('signVille').value=this.value">
         <div class="autocomplete-list" id="lieuList"></div>
       </div>
     </div>
@@ -294,7 +319,7 @@
       <div class="field">
         <label>Équipe locale</label>
         <div class="autocomplete-wrap">
-          <input type="text" id="equipeLocale" placeholder="Tapez une ville…" autocomplete="off">
+          <input type="text" id="equipeLocale" placeholder="Ex : Grenoble…" autocomplete="off">
           <div class="autocomplete-list" id="localeList"></div>
         </div>
         <div class="email-tags" id="localeEmails"></div>
@@ -302,7 +327,7 @@
       <div class="field">
         <label>Équipe visiteuse</label>
         <div class="autocomplete-wrap">
-          <input type="text" id="equipeVisiteuse" placeholder="Tapez une ville…" autocomplete="off">
+          <input type="text" id="equipeVisiteuse" placeholder="Ex : Angers…" autocomplete="off">
           <div class="autocomplete-list" id="visiteuseList"></div>
         </div>
       </div>
@@ -351,7 +376,9 @@
 
     <div class="fee-display">
       <div class="label">Indemnité de Match</div>
-      <div class="amount" id="feeAmount">— €</div>
+      <div class="fee-edit">
+        <input type="number" id="feeInput" class="fee-input" value="0" oninput="currentFee = parseInt(this.value) || 0"> <span class="fee-currency">€</span>
+      </div>
       <div class="detail" id="feeDetail"></div>
     </div>
   </div>
@@ -373,24 +400,24 @@
     <div class="row">
       <div class="field">
         <label>Prénom</label>
-        <input type="text" id="prenom" placeholder="">
+        <input type="text" id="prenom" placeholder="Prénom">
       </div>
       <div class="field">
         <label>Nom</label>
-        <input type="text" id="nom" placeholder="">
+        <input type="text" id="nom" placeholder="Nom">
       </div>
     </div>
     <div class="field">
       <label>Numéro de licence</label>
-      <input type="text" id="licence" placeholder="">
+      <input type="text" id="licence" placeholder="N° de licence">
     </div>
     <div class="field">
       <label>Adresse postale</label>
-      <textarea id="adresse" rows="2" placeholder=""></textarea>
+      <textarea id="adresse" rows="2" placeholder="Adresse complète"></textarea>
     </div>
     <div class="field">
       <label>Email</label>
-      <input type="email" id="email" placeholder="">
+      <input type="email" id="email" placeholder="votre@email.com">
     </div>
   </div>
 
@@ -399,16 +426,16 @@
     <div class="section-title">Relevé Bancaire</div>
     <div class="field">
       <label>IBAN</label>
-      <input type="text" id="iban" placeholder="">
+      <input type="text" id="iban" placeholder="FR76 XXXX XXXX XXXX XXXX XXX">
     </div>
     <div class="row">
       <div class="field">
         <label>BIC</label>
-        <input type="text" id="bic" placeholder="">
+        <input type="text" id="bic" placeholder="XXXXXXXX">
       </div>
       <div class="field">
         <label>RIB</label>
-        <input type="text" id="rib" placeholder="">
+        <input type="text" id="rib" placeholder="XXXXX XXXXX XXXXXXXXXXX XX">
       </div>
     </div>
   </div>
@@ -419,7 +446,7 @@
     <div class="row">
       <div class="field">
         <label>Fait à <span class="hint">= lieu du match</span></label>
-        <input type="text" id="signVille" placeholder="" readonly style="background:#f0f2f5;cursor:not-allowed;">
+        <input type="text" id="signVille" placeholder="Ville" readonly style="background:#f0f2f5;cursor:not-allowed;">
       </div>
       <div class="field">
         <label>Le <span class="hint">= date du match</span></label>
@@ -720,16 +747,16 @@ let currentFee = 0;
 function updateFee() {
   const cat = document.getElementById('categorie').value;
   const pos = document.getElementById('position').value;
-  if (!cat || !pos) { document.getElementById('feeAmount').textContent = '— €'; document.getElementById('feeDetail').textContent = ''; currentFee = 0; return; }
+  if (!cat || !pos) { document.getElementById('feeInput').value = 0; document.getElementById('feeDetail').textContent = ''; currentFee = 0; return; }
   const tarif = TARIFS[cat];
   if (!tarif) { currentFee = 0; return; }
   let base = tarif[pos] || 0;
   currentFee = base;
-  document.getElementById('feeAmount').textContent = `${currentFee} €`;
-  document.getElementById('feeDetail').textContent = tarif.label;
+  document.getElementById('feeInput').value = currentFee;
+  document.getElementById('feeDetail').textContent = tarif.label + ' · Modifiable si besoin';
 }
 
-function getTotal() { return currentFee + (parseInt(document.getElementById('indemniteGD').value) || 0); }
+function getTotal() { return (parseInt(document.getElementById('feeInput').value) || 0) + (parseInt(document.getElementById('indemniteGD').value) || 0); }
 
 // ============================================================
 // SIGNATURE
@@ -816,11 +843,12 @@ function buildPDF() {
   y += 6;
 
   heading('INDEMNITÉ');
-  row('Indemnité de Match:', `${currentFee} €`);
+  const matchFee = parseInt(document.getElementById('feeInput').value) || 0;
+  row('Indemnité de Match:', `${matchFee} €`);
   const indGD = parseInt(v('indemniteGD')) || 0;
   if (indGD > 0) row('Indemnité GD:', `${indGD} €`);
   doc.setFontSize(12); doc.setFont('helvetica','bold');
-  doc.text('TOTAL:', m, y); doc.text(`${getTotal()} €`, m + 55, y); y += 12;
+  doc.text('TOTAL:', m, y); doc.text(`${matchFee + indGD} €`, m + 55, y); y += 12;
 
   heading('RELEVÉ BANCAIRE');
   row('IBAN:', v('iban')); row('BIC:', v('bic')); row('RIB:', v('rib'));
@@ -872,8 +900,9 @@ function generateEmail() {
   const dateStr = formatDateFR(v('matchDate'));
   const catLabel = TARIFS[v('categorie')]?.label || v('categorie');
   const posLabel = v('position') === 'head' ? 'Arbitre Principal' : v('position') === 'ligne' ? 'Juge de Ligne' : 'Arbitre';
+  const matchFee = parseInt(document.getElementById('feeInput').value) || 0;
   const subject = `Note de Frais Arbitre - ${v('equipeLocale')} vs ${v('equipeVisiteuse')} - ${dateStr} - ${catLabel}`;
-  const body = `Bonjour,\n\nVeuillez trouver ci-jointe ma note de frais pour le match :\n\nMatch : ${v('equipeLocale')} vs ${v('equipeVisiteuse')}\nDate : ${dateStr} à ${v('matchTime')||'—'}\nLieu : ${v('matchLieu')}\nCatégorie : ${catLabel}\nPosition : ${posLabel}\n\nArbitre : ${v('prenom')} ${v('nom')}\nN° de licence : ${v('licence')}\n\nIndemnité de match : ${currentFee} €${parseInt(v('indemniteGD'))>0?`\nIndemnité Grand Déplacement : ${v('indemniteGD')} €`:''}\nTotal : ${getTotal()} €\n\nCoordonnées bancaires :\nIBAN : ${v('iban')}\nBIC : ${v('bic')}\n\nCordialement,\n${v('prenom')} ${v('nom')}\n${v('email')}`;
+  const body = `Bonjour,\n\nVeuillez trouver ci-jointe ma note de frais pour le match :\n\nMatch : ${v('equipeLocale')} vs ${v('equipeVisiteuse')}\nDate : ${dateStr} à ${v('matchTime')||'—'}\nLieu : ${v('matchLieu')}\nCatégorie : ${catLabel}\nPosition : ${posLabel}\n\nArbitre : ${v('prenom')} ${v('nom')}\nN° de licence : ${v('licence')}\n\nIndemnité de match : ${matchFee} €${parseInt(v('indemniteGD'))>0?`\nIndemnité Grand Déplacement : ${v('indemniteGD')} €`:''}\nTotal : ${getTotal()} €\n\nCoordonnées bancaires :\nIBAN : ${v('iban')}\nBIC : ${v('bic')}\n\nCordialement,\n${v('prenom')} ${v('nom')}\n${v('email')}`;
 
   // Aperçu
   const preview = document.getElementById('emailPreview');
