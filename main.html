@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Note de Frais - Arbitre Hockey</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,500;0,9..40,700;1,9..40,400&family=Space+Mono:wght@400;700&display=swap');
+
+  :root {
+    --bg: #f0f2f5;
+    --card: #ffffff;
+    --primary: #1a1a2e;
+    --accent: #0f4c75;
+    --accent-light: #3282b8;
+    --highlight: #bbe1fa;
+    --danger: #e74c3c;
+    --success: #27ae60;
+    --text: #1a1a2e;
+    --text-muted: #6b7280;
+    --border: #d1d5db;
+    --radius: 10px;
+    --shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding-bottom: 40px;
+  }
+
+  header {
+    background: var(--primary);
+    color: white;
+    padding: 20px 0 30px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  header::after {
+    content: '';
+    position: absolute;
+    bottom: -15px;
+    left: 0; right: 0;
+    height: 30px;
+    background: var(--bg);
+    border-radius: 50% 50% 0 0;
+  }
+  header .logo {
+    font-family: 'Space Mono', monospace;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    margin-bottom: 4px;
+  }
+  header .logo span { color: var(--highlight); }
+  header .subtitle {
+    font-size: 13px;
+    color: rgba(255,255,255,0.6);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 0 16px;
+  }
+
+  .section {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 24px 20px;
+    margin-top: 20px;
+    border-left: 4px solid var(--accent);
+    position: relative;
+  }
+  .section-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 6px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+  }
+
+  .field { margin-top: 18px; }
+  .field label {
+    display: block;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--text);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .field label .hint {
+    font-weight: 400;
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: none;
+    letter-spacing: 0;
+    display: block;
+    margin-top: 2px;
+  }
+
+  input, select, textarea {
+    width: 100%;
+    padding: 12px 14px;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    color: var(--text);
+    background: #fafbfc;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    -webkit-appearance: none;
+  }
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--accent-light);
+    box-shadow: 0 0 0 3px rgba(50,130,184,0.15);
+    background: #fff;
+  }
+  select {
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%236b7280' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 36px;
+  }
+
+  .row { display: flex; gap: 12px; }
+  .row > .field { flex: 1; }
+
+  /* ===== AUTOCOMPLETE ===== */
+  .autocomplete-wrap { position: relative; }
+  .autocomplete-list {
+    position: absolute;
+    top: 100%;
+    left: 0; right: 0;
+    background: var(--card);
+    border: 2px solid var(--accent-light);
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    max-height: 220px;
+    overflow-y: auto;
+    z-index: 50;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    display: none;
+  }
+  .autocomplete-list.open { display: block; }
+  .autocomplete-item {
+    padding: 10px 14px;
+    cursor: pointer;
+    font-size: 14px;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background 0.1s;
+  }
+  .autocomplete-item:last-child { border-bottom: none; }
+  .autocomplete-item:hover, .autocomplete-item.active { background: var(--highlight); }
+  .autocomplete-item .ac-name { font-weight: 600; color: var(--text); }
+  .autocomplete-item .ac-detail { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .ac-highlight { color: var(--accent); font-weight: 700; }
+
+  /* ===== EMAIL TAGS ===== */
+  .email-tags { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .email-tag {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: #e8f4fd; color: var(--accent);
+    padding: 4px 10px; border-radius: 20px;
+    font-size: 12px; font-weight: 500;
+    border: 1px solid #c5dff0;
+    word-break: break-all;
+  }
+  .email-tag .tag-label {
+    font-size: 10px; background: var(--accent); color: white;
+    padding: 1px 6px; border-radius: 10px; font-weight: 700; flex-shrink: 0;
+  }
+
+  .fee-display {
+    margin-top: 20px; padding: 16px;
+    background: linear-gradient(135deg, #e8f4fd, #f0f7ff);
+    border-radius: 8px; border: 2px solid var(--accent-light); text-align: center;
+  }
+  .fee-display .label { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); font-weight: 700; }
+  .fee-display .amount { font-family: 'Space Mono', monospace; font-size: 36px; font-weight: 700; color: var(--primary); margin-top: 4px; }
+  .fee-display .detail { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+  .signature-area {
+    margin-top: 10px; border: 2px dashed var(--border); border-radius: 8px;
+    position: relative; background: #fafbfc; overflow: hidden;
+  }
+  .signature-area canvas { display: block; width: 100%; height: 150px; cursor: crosshair; }
+  .sig-clear {
+    position: absolute; top: 8px; right: 8px;
+    background: var(--danger); color: white; border: none; border-radius: 6px;
+    padding: 4px 10px; font-size: 11px; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; font-weight: 700; z-index: 2;
+  }
+
+  .actions { margin-top: 24px; display: flex; flex-direction: column; gap: 12px; }
+  .btn {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    padding: 16px 24px; border: none; border-radius: var(--radius);
+    font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 700;
+    cursor: pointer; transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s; letter-spacing: 0.5px;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary { background: var(--accent); color: white; box-shadow: 0 4px 14px rgba(15,76,117,0.3); }
+  .btn-primary:hover { box-shadow: 0 6px 20px rgba(15,76,117,0.4); }
+  .btn-success { background: var(--success); color: white; box-shadow: 0 4px 14px rgba(39,174,96,0.3); }
+  .btn-outline { background: transparent; color: var(--accent); border: 2px solid var(--accent); }
+  .btn-danger { background: transparent; color: var(--danger); border: 2px solid var(--danger); font-size: 13px; padding: 12px; }
+  .icon { font-size: 18px; }
+
+  .toast {
+    position: fixed; bottom: 20px; left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--primary); color: white; padding: 14px 24px;
+    border-radius: 10px; font-weight: 500; font-size: 14px; z-index: 999;
+    transition: transform 0.3s ease; box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  .privacy { margin-top: 30px; text-align: center; padding: 20px; color: var(--text-muted); font-size: 12px; line-height: 1.6; }
+  .privacy strong { color: var(--text); }
+
+  .checkbox-field { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
+  .checkbox-field input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent); flex-shrink: 0; }
+  .checkbox-field label { margin: 0; font-size: 14px; font-weight: 500; text-transform: none; letter-spacing: 0; cursor: pointer; }
+
+  .email-preview {
+    margin-top: 16px; background: #f8f9fa; border: 1px solid var(--border); border-radius: 8px;
+    padding: 16px; font-size: 13px; line-height: 1.6; white-space: pre-wrap; color: var(--text);
+    max-height: 250px; overflow-y: auto;
+  }
+  .email-preview .email-to { font-weight: 700; color: var(--accent); margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+
+  .email-select-section {
+    margin-top: 12px; padding: 14px; background: #f8f9fa; border-radius: 8px; border: 1px solid var(--border);
+  }
+  .email-select-section .es-title { font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; letter-spacing: 0.5px; }
+  .email-check { display: flex; align-items: center; gap: 8px; padding: 6px 0; }
+  .email-check input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent); flex-shrink: 0; }
+  .email-check label { font-size: 13px; font-weight: 500; text-transform: none; letter-spacing: 0; cursor: pointer; margin: 0; word-break: break-all; }
+  .email-check .ec-badge { font-size: 10px; background: var(--accent-light); color: white; padding: 1px 6px; border-radius: 10px; font-weight: 700; flex-shrink: 0; margin-left: 4px; }
+
+  @media (max-width: 400px) {
+    .row { flex-direction: column; gap: 0; }
+    .section { padding: 20px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🏒 <span>STRIPES</span></div>
+  <div class="subtitle">Note de Frais · Arbitre Hockey</div>
+</header>
+
+<div class="container">
+
+  <!-- ========== MATCH ========== -->
+  <div class="section">
+    <div class="section-title">Match</div>
+    <div class="row">
+      <div class="field">
+        <label>Date du match</label>
+        <input type="date" id="matchDate" onchange="document.getElementById('signDate').value=this.value">
+      </div>
+      <div class="field">
+        <label>Heure</label>
+        <input type="time" id="matchTime">
+      </div>
+    </div>
+    <div class="field">
+      <label>Lieu (Patinoire)</label>
+      <div class="autocomplete-wrap">
+        <input type="text" id="matchLieu" placeholder="Tapez une ville…" autocomplete="off" oninput="document.getElementById('signVille').value=this.value">
+        <div class="autocomplete-list" id="lieuList"></div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>Équipe locale</label>
+        <div class="autocomplete-wrap">
+          <input type="text" id="equipeLocale" placeholder="Tapez une ville…" autocomplete="off">
+          <div class="autocomplete-list" id="localeList"></div>
+        </div>
+        <div class="email-tags" id="localeEmails"></div>
+      </div>
+      <div class="field">
+        <label>Équipe visiteuse</label>
+        <div class="autocomplete-wrap">
+          <input type="text" id="equipeVisiteuse" placeholder="Tapez une ville…" autocomplete="off">
+          <div class="autocomplete-list" id="visiteuseList"></div>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>Catégorie</label>
+        <select id="categorie" onchange="updateFee()">
+          <option value="">Sélectionner...</option>
+          <optgroup label="Championnats Pro">
+            <option value="SLM">Ligue Magnus</option>
+            <option value="D1">Division 1</option>
+            <option value="D2">Division 2</option>
+            <option value="D2_PO">Division 2 (PlayOffs)</option>
+            <option value="D3">Division 3 (2 arb.)</option>
+            <option value="D3_PO">Division 3 (3 arb. PlayOffs)</option>
+          </optgroup>
+          <optgroup label="Championnats Jeunes / Féminin">
+            <option value="U20">U20 / U18 structure</option>
+            <option value="U20_CF">U20 / U18 CF (finale)</option>
+            <option value="U15">U15 / Féminin (2 arb.)</option>
+          </optgroup>
+          <optgroup label="Désignations Club">
+            <option value="FEM_LOISIR">Féminin / Loisirs / Trophée Fédéral (50€)</option>
+            <option value="PARA_U15_3X3">Para / U15 / 3x3 (30€)</option>
+            <option value="U13">U13 (25€)</option>
+            <option value="U11">U11 (22€)</option>
+            <option value="U9">U9 (20€)</option>
+          </optgroup>
+          <optgroup label="Autres">
+            <option value="AMICAL">Amical</option>
+            <option value="CDF">Coupe de France</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="field">
+        <label>Position</label>
+        <select id="position" onchange="updateFee()">
+          <option value="">Sélectionner...</option>
+          <option value="head">Arbitre Principal</option>
+          <option value="ligne">Juge de Ligne</option>
+          <option value="seul">Arbitre (seul/2 arb.)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="fee-display">
+      <div class="label">Indemnité de Match</div>
+      <div class="amount" id="feeAmount">— €</div>
+      <div class="detail" id="feeDetail"></div>
+    </div>
+  </div>
+
+  <!-- ========== INDEMNITÉ COMPLÉMENTAIRE ========== -->
+  <div class="section">
+    <div class="section-title">Indemnité Complémentaire</div>
+    <div class="field">
+      <label>Indemnité de Grand Déplacement (€)
+        <span class="hint">Seulement si payée par le club (Amical, CdF, Junior, Fém, D3, Para…)</span>
+      </label>
+      <input type="number" id="indemniteGD" placeholder="0" value="0">
+    </div>
+  </div>
+
+  <!-- ========== ARBITRE ========== -->
+  <div class="section">
+    <div class="section-title">Arbitre</div>
+    <div class="row">
+      <div class="field">
+        <label>Prénom</label>
+        <input type="text" id="prenom" placeholder="Pierre-Louis">
+      </div>
+      <div class="field">
+        <label>Nom</label>
+        <input type="text" id="nom" placeholder="Jullian">
+      </div>
+    </div>
+    <div class="field">
+      <label>Numéro de licence</label>
+      <input type="text" id="licence" placeholder="231414">
+    </div>
+    <div class="field">
+      <label>Adresse postale</label>
+      <textarea id="adresse" rows="2" placeholder="58 Rue Félix Esclangon, 38000 Grenoble"></textarea>
+    </div>
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="email" placeholder="pierrelouis.jullian@icloud.com">
+    </div>
+  </div>
+
+  <!-- ========== RELEVÉ BANCAIRE ========== -->
+  <div class="section">
+    <div class="section-title">Relevé Bancaire</div>
+    <div class="field">
+      <label>IBAN</label>
+      <input type="text" id="iban" placeholder="FR76 1027 8026 0500 0200 7560 484">
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>BIC</label>
+        <input type="text" id="bic" placeholder="CMCIFR2A">
+      </div>
+      <div class="field">
+        <label>RIB</label>
+        <input type="text" id="rib" placeholder="10278 02605 00020075604 84">
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== SIGNATURE ========== -->
+  <div class="section">
+    <div class="section-title">Signature</div>
+    <div class="row">
+      <div class="field">
+        <label>Fait à <span class="hint">= lieu du match</span></label>
+        <input type="text" id="signVille" placeholder="Villard de Lans" readonly style="background:#f0f2f5;cursor:not-allowed;">
+      </div>
+      <div class="field">
+        <label>Le <span class="hint">= date du match</span></label>
+        <input type="date" id="signDate" readonly style="background:#f0f2f5;cursor:not-allowed;">
+      </div>
+    </div>
+    <div class="field">
+      <label>Signature</label>
+      <div class="signature-area">
+        <canvas id="sigCanvas"></canvas>
+        <button class="sig-clear" onclick="clearSignature()">✕ Effacer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== ACTIONS ========== -->
+  <div class="section" style="border-left-color: var(--success);">
+    <div class="section-title">Actions</div>
+
+    <div class="email-select-section" id="emailSelectSection" style="display:none;">
+      <div class="es-title">📧 Destinataires du mail</div>
+      <div id="emailCheckboxes"></div>
+    </div>
+
+    <div id="emailPreviewContainer" style="display:none;">
+      <div class="email-preview" id="emailPreview"></div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-primary" onclick="generatePDF()">
+        <span class="icon">📄</span> Générer et voir le PDF
+      </button>
+      <button class="btn btn-success" onclick="generateEmail()">
+        <span class="icon">✉️</span> Envoyer par mail
+      </button>
+      <button class="btn btn-outline" onclick="saveData()">
+        <span class="icon">💾</span> Sauvegarder mes données
+      </button>
+      <button class="btn btn-danger" onclick="clearSavedData()">
+        Supprimer les données enregistrées
+      </button>
+    </div>
+  </div>
+
+  <div class="privacy">
+    🔒 <strong>Confidentialité garantie :</strong> Toutes vos données restent dans votre navigateur
+    et ne sont jamais envoyées vers un serveur. Cette application fonctionne entièrement hors ligne.
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// CLUBS DATABASE — grouped by city, multiple emails per city
+// ============================================================
+const CLUBS_RAW = [
+  { city: "Alpe d'Huez", emails: [{ email: "alpedhuez.82001@ffhg.eu", label: "Club" }] },
+  { city: "Albertville", emails: [{ email: "albertville.82010@ffhg.eu", label: "Club" }, { email: "albertville.82027@ffhg.eu", label: "Loisir" }] },
+  { city: "Amiens", emails: [{ email: "amiens.22001@ffhg.eu", label: "Amateur" }, { email: "amienspro.22001@ffhg.eu", label: "Pro" }] },
+  { city: "Amnéville", emails: [{ email: "amneville.41004@ffhg.eu", label: "Club" }] },
+  { city: "Angers", emails: [{ email: "angers.52007@ffhg.eu", label: "Amateur" }, { email: "angerspro.52007@ffhg.eu", label: "Pro" }] },
+  { city: "Anglet", emails: [{ email: "anglet.72001@ffhg.eu", label: "Amateur" }, { email: "angletpro.72001@ffhg.eu", label: "Pro" }] },
+  { city: "Annecy", emails: [{ email: "annecy.82028@ffhg.eu", label: "Club" }] },
+  { city: "Argenteuil", emails: [{ email: "argenteuil.11002@ffhg.eu", label: "Club" }] },
+  { city: "Asnières", emails: [{ email: "asnieres.11003@ffhg.eu", label: "Club" }] },
+  { city: "Aubagne", emails: [{ email: "aubagne.93020@ffhg.eu", label: "Garlaban" }] },
+  { city: "Auron", emails: [{ email: "auron.93022@ffhg.eu", label: "Club" }] },
+  { city: "Avignon", emails: [{ email: "avignon.93016@ffhg.eu", label: "Club" }] },
+  { city: "Beauvais", emails: [{ email: "beauvais.31005@ffhg.eu", label: "Club" }] },
+  { city: "Belfort", emails: [{ email: "belfort.43004@ffhg.eu", label: "Club" }] },
+  { city: "Besançon", emails: [{ email: "besancon.43002@ffhg.eu", label: "Club" }] },
+  { city: "Bordeaux", emails: [{ email: "bordeaux.72003@ffhg.eu", label: "Amateur" }, { email: "bordeauxpro.72003@ffhg.eu", label: "Pro" }] },
+  { city: "Bourges", emails: [{ email: "bourges.24008@ffhg.eu", label: "Club" }] },
+  { city: "Bourgueil", emails: [{ email: "bourgueil.24005@ffhg.eu", label: "Club" }] },
+  { city: "Brest", emails: [{ email: "brest.53001@ffhg.eu", label: "Albatros" }] },
+  { city: "Briançon", emails: [{ email: "briancon.93003@ffhg.eu", label: "Amateur" }, { email: "brianconpro.93003@ffhg.eu", label: "Pro" }] },
+  { city: "Brive", emails: [{ email: "brive.74001@ffhg.eu", label: "Club" }] },
+  { city: "Caen", emails: [{ email: "caen.25001@ffhg.eu", label: "Club" }] },
+  { city: "Castres", emails: [{ email: "castres.73001@ffhg.eu", label: "Club" }] },
+  { city: "Cauterets", emails: [{ email: "cauterets.73003@ffhg.eu", label: "Club" }] },
+  { city: "Cergy-Pontoise", emails: [{ email: "cergy.11013@ffhg.eu", label: "Amateur" }, { email: "cergypro.11013@ffhg.eu", label: "Pro" }] },
+  { city: "Châlons-en-Champagne", emails: [{ email: "chalons.21002@ffhg.eu", label: "Club" }] },
+  { city: "Chambéry", emails: [{ email: "chambery.82004@ffhg.eu", label: "Amateur" }, { email: "chamberypro.82004@ffhg.eu", label: "Pro" }] },
+  { city: "Chamonix", emails: [{ email: "chamonix.82005@ffhg.eu", label: "Amateur" }, { email: "chamonixpro.82005@ffhg.eu", label: "Pro" }] },
+  { city: "Champigny", emails: [{ email: "champigny.11030@ffhg.eu", label: "Club" }] },
+  { city: "Charleville-Mézières", emails: [{ email: "charleville.21001@ffhg.eu", label: "Club" }] },
+  { city: "Châtellerault", emails: [{ email: "chatellerault.54003@ffhg.eu", label: "Club" }] },
+  { city: "Cherbourg", emails: [{ email: "cherbourg.25003@ffhg.eu", label: "Homards" }] },
+  { city: "Cholet", emails: [{ email: "cholet.52002@ffhg.eu", label: "Club" }] },
+  { city: "Cléon", emails: [{ email: "cleon.23004@ffhg.eu", label: "Crocodiles" }] },
+  { city: "Clermont-Ferrand", emails: [{ email: "clermont.83001@ffhg.eu", label: "Club" }] },
+  { city: "Colmar", emails: [{ email: "colmar.42001@ffhg.eu", label: "Club" }] },
+  { city: "Compiègne", emails: [{ email: "compiegne.22002@ffhg.eu", label: "Club" }] },
+  { city: "Courbevoie", emails: [{ email: "courbevoie.11009@ffhg.eu", label: "Club" }] },
+  { city: "Courchevel", emails: [{ email: "courchevel.82020@ffhg.eu", label: "Club" }] },
+  { city: "Dammarie", emails: [{ email: "dammarie.11005@ffhg.eu", label: "Caribous" }] },
+  { city: "Dijon", emails: [{ email: "dijon.26004@ffhg.eu", label: "Club" }] },
+  { city: "Dreux", emails: [{ email: "dreux.24010@ffhg.eu", label: "Monarques" }] },
+  { city: "Dunkerque", emails: [{ email: "dunkerque.31002@ffhg.eu", label: "Club" }] },
+  { city: "Épinal", emails: [{ email: "epinal.41002@ffhg.eu", label: "Club" }] },
+  { city: "Évry-Viry", emails: [{ email: "evryviry.11025@ffhg.eu", label: "Club" }] },
+  { city: "Font-Romeu", emails: [{ email: "fontromeu.91006@ffhg.eu", label: "Club" }] },
+  { city: "Fontenay", emails: [{ email: "fontenay.11022@ffhg.eu", label: "Club" }] },
+  { city: "Franconville", emails: [{ email: "franconville.11027@ffhg.eu", label: "Club" }] },
+  { city: "Gap", emails: [{ email: "gap.93002@ffhg.eu", label: "APH" }, { email: "gap.93006@ffhg.eu", label: "Rapaces" }, { email: "gappro.93006@ffhg.eu", label: "Pro" }] },
+  { city: "Garges", emails: [{ email: "garges.11014@ffhg.eu", label: "Club" }] },
+  { city: "Grenoble", emails: [{ email: "grenoble.82007@ffhg.eu", label: "Amateur" }, { email: "grenoblepro.82007@ffhg.eu", label: "Pro" }] },
+  { city: "Joué-lès-Tours", emails: [{ email: "jouelestours.24002@ffhg.eu", label: "Club" }] },
+  { city: "La Clusaz", emails: [{ email: "laclusaz.82014@ffhg.eu", label: "Club" }] },
+  { city: "La Roche-sur-Yon", emails: [{ email: "larochesuryon.52004@ffhg.eu", label: "Hogly" }] },
+  { city: "Lanester", emails: [{ email: "lanester.53008@ffhg.eu", label: "Béliers" }] },
+  { city: "Langueux", emails: [{ email: "langueux.53002@ffhg.eu", label: "Korrigans" }] },
+  { city: "Le Havre", emails: [{ email: "lehavre.23002@ffhg.eu", label: "Club" }] },
+  { city: "Le Lioran", emails: [{ email: "lelioran.83003@ffhg.eu", label: "Mouflons" }] },
+  { city: "Le Mans", emails: [{ email: "lemans.52003@ffhg.eu", label: "Club" }] },
+  { city: "Les Houches", emails: [{ email: "leshouches.82003@ffhg.eu", label: "Club" }] },
+  { city: "Limoges", emails: [{ email: "limoges.74003@ffhg.eu", label: "Club" }] },
+  { city: "Louviers", emails: [{ email: "louviers.23003@ffhg.eu", label: "Loups" }] },
+  { city: "Lyon", emails: [{ email: "lyon.82015@ffhg.eu", label: "Club" }] },
+  { city: "Mantes", emails: [{ email: "mantes.11004@ffhg.eu", label: "Club" }] },
+  { city: "Marseille", emails: [{ email: "marseille.93019@ffhg.eu", label: "Amateur" }, { email: "marseillepro.93019@ffhg.eu", label: "Pro" }] },
+  { city: "Megève", emails: [{ email: "megeve.82016@ffhg.eu", label: "Club" }] },
+  { city: "Metz", emails: [{ email: "metz.41008@ffhg.eu", label: "Club" }] },
+  { city: "Meudon", emails: [{ email: "meudon.11019@ffhg.eu", label: "Club" }] },
+  { city: "Mont Blanc", emails: [{ email: "montblanc.82009@ffhg.eu", label: "Pays du Mont Blanc" }, { email: "stgervais.82019@ffhg.eu", label: "St-Gervais" }] },
+  { city: "Mont-Dore", emails: [{ email: "montdore.83002@ffhg.eu", label: "Club" }] },
+  { city: "Montpellier", emails: [{ email: "montpellier.91003@ffhg.eu", label: "Club" }] },
+  { city: "Morzine-Avoriaz", emails: [{ email: "morzine.82017@ffhg.eu", label: "Club" }] },
+  { city: "Mulhouse", emails: [{ email: "mulhouse.42002@ffhg.eu", label: "Club" }] },
+  { city: "Nantes", emails: [{ email: "nantes.52005@ffhg.eu", label: "Club" }] },
+  { city: "Narbonne", emails: [{ email: "narbonne.91004@ffhg.eu", label: "Club" }] },
+  { city: "Neuilly-sur-Marne", emails: [{ email: "neuillysurmarne.11015@ffhg.eu", label: "Club" }] },
+  { city: "Nice", emails: [{ email: "nice.93008@ffhg.eu", label: "Amateur" }, { email: "nicepro.93008@ffhg.eu", label: "Pro" }] },
+  { city: "Nîmes", emails: [{ email: "nimes.91008@ffhg.eu", label: "Club" }] },
+  { city: "Niort", emails: [{ email: "niort.54001@ffhg.eu", label: "Club" }] },
+  { city: "Orcières", emails: [{ email: "orcieres.93010@ffhg.eu", label: "Club" }] },
+  { city: "Orléans", emails: [{ email: "orleans.24004@ffhg.eu", label: "Club" }] },
+  { city: "Paris", emails: [{ email: "paris.11007@ffhg.eu", label: "Français Volants" }] },
+  { city: "Poitiers", emails: [{ email: "poitiers.54002@ffhg.eu", label: "Club" }] },
+  { city: "Reims", emails: [{ email: "reims.21005@ffhg.eu", label: "Club" }] },
+  { city: "Rennes", emails: [{ email: "rennes.53006@ffhg.eu", label: "Cormorans" }] },
+  { city: "Roanne", emails: [{ email: "roanne.82018@ffhg.eu", label: "Club" }] },
+  { city: "Romorantin", emails: [{ email: "romorantin.24009@ffhg.eu", label: "Club" }] },
+  { city: "Rouen", emails: [{ email: "rouen.23001@ffhg.eu", label: "Amateur" }, { email: "rouenpro.23001@ffhg.eu", label: "Pro" }] },
+  { city: "Samoëns", emails: [{ email: "samoens.82029@ffhg.eu", label: "Lynx" }] },
+  { city: "Serre Chevalier", emails: [{ email: "SERRECHEVALIER.93011@FFHG.EU", label: "Club" }] },
+  { city: "St-Martin", emails: [{ email: "stmartin.23005@ffhg.eu", label: "Éclairs" }] },
+  { city: "St-Pierre", emails: [{ email: "stpierremineur.00001@ffhg.eu", label: "Mineur" }, { email: "stpierrecougars.00002@ffhg.eu", label: "Cougars" }, { email: "stpierresporting.00003@ffhg.eu", label: "Sporting" }, { email: "stpierreharfangs.00020@ffhg.eu", label: "Harfangs" }] },
+  { city: "Strasbourg", emails: [{ email: "strasbourg.42003@ffhg.eu", label: "Club" }] },
+  { city: "Toul", emails: [{ email: "toul.41003@ffhg.eu", label: "Club" }] },
+  { city: "Toulon", emails: [{ email: "toulon.93012@ffhg.eu", label: "Club" }] },
+  { city: "Toulouse", emails: [{ email: "toulouse.73002@ffhg.eu", label: "Club" }] },
+  { city: "Tours", emails: [{ email: "tours.24007@ffhg.eu", label: "Remparts" }] },
+  { city: "Troyes", emails: [{ email: "troyes.21004@ffhg.eu", label: "Club" }] },
+  { city: "Val d'Allos", emails: [{ email: "valdallos.93023@ffhg.eu", label: "Club" }] },
+  { city: "Valence", emails: [{ email: "valence.82021@ffhg.eu", label: "Club" }] },
+  { city: "Valenciennes", emails: [{ email: "valenciennes.31004@ffhg.eu", label: "Club" }] },
+  { city: "Vaujany", emails: [{ email: "vaujany.82026@ffhg.eu", label: "Club" }] },
+  { city: "Villard de Lans", emails: [{ email: "villard.82022@ffhg.eu", label: "Les Ours" }, { email: "villard.82008@ffhg.eu", label: "Féminin" }] },
+  { city: "Vitry", emails: [{ email: "vitry.11023@ffhg.eu", label: "Club" }] },
+  { city: "Wasquehal", emails: [{ email: "wasquehal.31003@ffhg.eu", label: "Lions" }] },
+].sort((a, b) => a.city.localeCompare(b.city, 'fr'));
+
+const TARIFS = {
+  SLM:        { head: 575, ligne: 450, seul: 575, gd: 150, gdMax: 300, label: "Ligue Magnus" },
+  D1:         { head: 425, ligne: 300, seul: 425, gd: 100, gdMax: 200, label: "D1" },
+  D2:         { head: 350, ligne: 250, seul: 350, gd: 100, gdMax: 0,   label: "D2" },
+  D2_PO:      { head: 350, ligne: 250, seul: 350, gd: 0,   gdMax: 200, label: "D2 PlayOffs" },
+  D3:         { head: 0,   ligne: 0,   seul: 250, gd: 100, gdMax: 200, label: "D3 (2 arb.)" },
+  D3_PO:      { head: 295, ligne: 210, seul: 295, gd: 100, gdMax: 200, label: "D3 PlayOffs (3 arb.)" },
+  U20:        { head: 200, ligne: 140, seul: 200, gd: 100, gdMax: 0,   label: "U20/U18 structure" },
+  U20_CF:     { head: 200, ligne: 140, seul: 200, gd: 100, gdMax: 0,   label: "U20/U18 CF finale" },
+  U15:        { head: 0,   ligne: 0,   seul: 110, gd: 100, gdMax: 0,   label: "U15/Féminin (2 arb.)" },
+  FEM_LOISIR: { head: 50,  ligne: 50,  seul: 50,  gd: 0,   gdMax: 0,   label: "Fém/Loisirs/TF" },
+  PARA_U15_3X3:{ head: 30, ligne: 30,  seul: 30,  gd: 0,   gdMax: 0,   label: "Para/U15/3x3" },
+  U13:        { head: 25,  ligne: 25,  seul: 25,  gd: 0,   gdMax: 0,   label: "U13" },
+  U11:        { head: 22,  ligne: 22,  seul: 22,  gd: 0,   gdMax: 0,   label: "U11" },
+  U9:         { head: 20,  ligne: 20,  seul: 20,  gd: 0,   gdMax: 0,   label: "U9" },
+  AMICAL:     { head: 0,   ligne: 0,   seul: 0,   gd: 0,   gdMax: 0,   label: "Amical" },
+  CDF:        { head: 0,   ligne: 0,   seul: 0,   gd: 0,   gdMax: 0,   label: "Coupe de France" },
+};
+
+// ============================================================
+// AUTOCOMPLETE
+// ============================================================
+function normalize(str) {
+  return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+}
+
+function setupAutocomplete(inputId, listId, isClub, emailTagsId) {
+  const input = document.getElementById(inputId);
+  const list = document.getElementById(listId);
+  let activeIdx = -1;
+
+  function render(query) {
+    const nq = normalize(query.trim());
+    if (nq.length < 1) { list.classList.remove('open'); return; }
+
+    const results = CLUBS_RAW.filter(c => normalize(c.city).includes(nq)).slice(0, 8);
+    if (results.length === 0) { list.classList.remove('open'); return; }
+
+    list.innerHTML = results.map((c, i) => {
+      const hl = highlightMatch(c.city, query.trim());
+      const detail = isClub ? c.emails.map(e => e.label).join(' · ') : '';
+      return `<div class="autocomplete-item" data-idx="${i}" data-value="${c.city}">
+        <div class="ac-name">${hl}</div>
+        ${detail ? `<div class="ac-detail">${detail}</div>` : ''}
+      </div>`;
+    }).join('');
+
+    activeIdx = -1;
+    list.classList.add('open');
+
+    list.querySelectorAll('.autocomplete-item').forEach(item => {
+      item.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        selectItem(item.dataset.value);
+      });
+    });
+  }
+
+  function selectItem(val) {
+    input.value = val;
+    list.classList.remove('open');
+    if (isClub && emailTagsId) showEmailTags(val, emailTagsId);
+    if (inputId === 'equipeLocale') updateEmailCheckboxes();
+    if (inputId === 'matchLieu') document.getElementById('signVille').value = val;
+  }
+
+  function highlightMatch(text, query) {
+    const nText = normalize(text);
+    const nQuery = normalize(query);
+    const idx = nText.indexOf(nQuery);
+    if (idx === -1) return text;
+    return text.substring(0, idx) + '<span class="ac-highlight">' + text.substring(idx, idx + query.length) + '</span>' + text.substring(idx + query.length);
+  }
+
+  input.addEventListener('input', () => render(input.value));
+  input.addEventListener('focus', () => { if (input.value.length >= 1) render(input.value); });
+
+  input.addEventListener('keydown', (e) => {
+    const items = list.querySelectorAll('.autocomplete-item');
+    if (!list.classList.contains('open') || items.length === 0) return;
+    if (e.key === 'ArrowDown') { e.preventDefault(); activeIdx = Math.min(activeIdx + 1, items.length - 1); items.forEach((it, i) => it.classList.toggle('active', i === activeIdx)); items[activeIdx]?.scrollIntoView({ block: 'nearest' }); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); activeIdx = Math.max(activeIdx - 1, 0); items.forEach((it, i) => it.classList.toggle('active', i === activeIdx)); items[activeIdx]?.scrollIntoView({ block: 'nearest' }); }
+    else if (e.key === 'Enter') { e.preventDefault(); if (activeIdx >= 0 && items[activeIdx]) selectItem(items[activeIdx].dataset.value); }
+    else if (e.key === 'Escape') { list.classList.remove('open'); }
+  });
+
+  input.addEventListener('blur', () => { setTimeout(() => list.classList.remove('open'), 150); });
+}
+
+function showEmailTags(cityName, containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const club = CLUBS_RAW.find(c => c.city === cityName);
+  if (!club) { container.innerHTML = ''; return; }
+  container.innerHTML = club.emails.map(e =>
+    `<span class="email-tag"><span class="tag-label">${e.label}</span>${e.email}</span>`
+  ).join('');
+}
+
+function updateEmailCheckboxes() {
+  const localeCity = document.getElementById('equipeLocale').value;
+  const club = CLUBS_RAW.find(c => c.city === localeCity);
+  const section = document.getElementById('emailSelectSection');
+  const container = document.getElementById('emailCheckboxes');
+  if (!club || club.emails.length === 0) { section.style.display = 'none'; return; }
+  section.style.display = 'block';
+  container.innerHTML = club.emails.map((e, i) =>
+    `<div class="email-check">
+      <input type="checkbox" id="emailCb_${i}" ${i === 0 ? 'checked' : ''} value="${e.email}">
+      <label for="emailCb_${i}">${e.email} <span class="ec-badge">${e.label}</span></label>
+    </div>`
+  ).join('');
+}
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  const today = new Date().toISOString().split('T')[0];
+  if (!document.getElementById('matchDate').value) document.getElementById('matchDate').value = today;
+  if (!document.getElementById('signDate').value) document.getElementById('signDate').value = today;
+  initSignature();
+  loadData();
+  setupAutocomplete('matchLieu', 'lieuList', false, null);
+  setupAutocomplete('equipeLocale', 'localeList', true, 'localeEmails');
+  setupAutocomplete('equipeVisiteuse', 'visiteuseList', false, null);
+});
+
+// ============================================================
+// FEE
+// ============================================================
+let currentFee = 0;
+
+function updateFee() {
+  const cat = document.getElementById('categorie').value;
+  const pos = document.getElementById('position').value;
+  if (!cat || !pos) { document.getElementById('feeAmount').textContent = '— €'; document.getElementById('feeDetail').textContent = ''; currentFee = 0; return; }
+  const tarif = TARIFS[cat];
+  if (!tarif) { currentFee = 0; return; }
+  let base = tarif[pos] || 0;
+  currentFee = base;
+  document.getElementById('feeAmount').textContent = `${currentFee} €`;
+  document.getElementById('feeDetail').textContent = tarif.label;
+}
+
+function getTotal() { return currentFee + (parseInt(document.getElementById('indemniteGD').value) || 0); }
+
+// ============================================================
+// SIGNATURE
+// ============================================================
+let sigCanvas, sigCtx, drawing = false;
+function initSignature() {
+  sigCanvas = document.getElementById('sigCanvas'); sigCtx = sigCanvas.getContext('2d');
+  const rect = sigCanvas.getBoundingClientRect();
+  sigCanvas.width = rect.width * 2; sigCanvas.height = rect.height * 2;
+  sigCtx.scale(2, 2); sigCtx.strokeStyle = '#1a1a2e'; sigCtx.lineWidth = 2; sigCtx.lineCap = 'round'; sigCtx.lineJoin = 'round';
+  function getPos(e) { const r = sigCanvas.getBoundingClientRect(); const t = e.touches ? e.touches[0] : e; return { x: t.clientX - r.left, y: t.clientY - r.top }; }
+  sigCanvas.addEventListener('mousedown', e => { drawing = true; sigCtx.beginPath(); const p = getPos(e); sigCtx.moveTo(p.x, p.y); });
+  sigCanvas.addEventListener('mousemove', e => { if (!drawing) return; const p = getPos(e); sigCtx.lineTo(p.x, p.y); sigCtx.stroke(); });
+  sigCanvas.addEventListener('mouseup', () => drawing = false);
+  sigCanvas.addEventListener('mouseleave', () => drawing = false);
+  sigCanvas.addEventListener('touchstart', e => { e.preventDefault(); drawing = true; sigCtx.beginPath(); const p = getPos(e); sigCtx.moveTo(p.x, p.y); }, { passive: false });
+  sigCanvas.addEventListener('touchmove', e => { e.preventDefault(); if (!drawing) return; const p = getPos(e); sigCtx.lineTo(p.x, p.y); sigCtx.stroke(); }, { passive: false });
+  sigCanvas.addEventListener('touchend', () => drawing = false);
+}
+function clearSignature() { sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height); }
+
+// ============================================================
+// STORAGE
+// ============================================================
+function saveData() {
+  let sigData = '';
+  try { sigData = sigCanvas.toDataURL('image/png'); } catch(e) {}
+  localStorage.setItem('stripes_arbitre', JSON.stringify({
+    prenom: v('prenom'), nom: v('nom'), licence: v('licence'), adresse: v('adresse'), email: v('email'), iban: v('iban'), bic: v('bic'), rib: v('rib'), signature: sigData,
+  }));
+  showToast('✅ Données sauvegardées !');
+}
+function loadData() {
+  try {
+    const d = JSON.parse(localStorage.getItem('stripes_arbitre') || '{}');
+    ['prenom','nom','licence','adresse','email','iban','bic','rib'].forEach(k => { if (d[k]) document.getElementById(k).value = d[k]; });
+    if (d.signature) {
+      const img = new Image();
+      img.onload = () => { sigCtx.drawImage(img, 0, 0, sigCanvas.width / 2, sigCanvas.height / 2); };
+      img.src = d.signature;
+    }
+  } catch (e) {}
+}
+function clearSavedData() { if (confirm('Supprimer toutes les données enregistrées ?')) { localStorage.removeItem('stripes_arbitre'); showToast('🗑️ Données supprimées'); } }
+
+// ============================================================
+// PDF FILENAME
+// ============================================================
+function getPdfFilename() {
+  const dateFile = v('matchDate').replace(/-/g,'');
+  return `NoteDeFrais_${dateFile}_${v('categorie')||'MATCH'}_${(v('matchLieu')||'Lieu').replace(/\s/g,'')}_vs_${(v('equipeVisiteuse')||'Vis').replace(/\s/g,'')}_${v('nom')}_${v('prenom')}.pdf`;
+}
+
+// ============================================================
+// BUILD PDF (returns jsPDF doc)
+// ============================================================
+function buildPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF('p', 'mm', 'a4');
+  const W = 210, m = 20;
+  let y = 20;
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(18);
+  doc.text('NOTE DE FRAIS - ARBITRE HOCKEY', W / 2, y, { align: 'center' });
+  y += 4; doc.setDrawColor(0); doc.setLineWidth(0.5); doc.line(m, y, W - m, y); y += 12;
+
+  function heading(t) { doc.setFontSize(14); doc.setFont('helvetica','bold'); doc.text(t, m, y); y += 2; doc.setLineWidth(0.3); doc.line(m, y, W-m, y); y += 8; doc.setFontSize(10); }
+  function row(l, val, l2, v2) { doc.setFont('helvetica','bold'); doc.text(l, m, y); doc.setFont('helvetica','normal'); doc.text(val||'', m+35, y); if(l2){ doc.setFont('helvetica','bold'); doc.text(l2,115,y); doc.setFont('helvetica','normal'); doc.text(v2||'',155,y); } y+=7; }
+
+  const dateStr = formatDateFR(v('matchDate'));
+  const catLabel = TARIFS[v('categorie')]?.label || v('categorie');
+  const posLabel = v('position') === 'head' ? 'Arbitre Principal' : v('position') === 'ligne' ? 'Juge de Ligne' : 'Arbitre';
+
+  heading('MATCH');
+  row('Date:', dateStr, 'Heure:', v('matchTime'));
+  row('Lieu:', v('matchLieu'));
+  row('Équipe locale:', v('equipeLocale'), 'Équipe visiteuse:', v('equipeVisiteuse'));
+  row('Catégorie:', catLabel, 'Position:', posLabel);
+  y += 6;
+
+  heading('ARBITRE');
+  row('Nom et prénom:', `${v('prenom')} ${v('nom')}`, 'N° de licence:', v('licence'));
+  row('Adresse:', v('adresse'));
+  row('Email:', v('email'));
+  y += 6;
+
+  heading('INDEMNITÉ');
+  row('Indemnité de Match:', `${currentFee} €`);
+  const indGD = parseInt(v('indemniteGD')) || 0;
+  if (indGD > 0) row('Indemnité GD:', `${indGD} €`);
+  doc.setFontSize(12); doc.setFont('helvetica','bold');
+  doc.text('TOTAL:', m, y); doc.text(`${getTotal()} €`, m + 55, y); y += 12;
+
+  heading('RELEVÉ BANCAIRE');
+  row('IBAN:', v('iban')); row('BIC:', v('bic')); row('RIB:', v('rib'));
+  y += 6;
+
+  heading('SIGNATURE');
+  row('Fait à:', v('signVille'), 'Le:', formatDateFR(v('signDate')));
+  y += 3; doc.setFont('helvetica','bold'); doc.text('Signature:', m, y); y += 4;
+  try { doc.addImage(sigCanvas.toDataURL('image/png'), 'PNG', m, y, 60, 25); } catch (e) {}
+
+  return doc;
+}
+
+// ============================================================
+// BOUTON 1 : Générer le PDF et l'afficher
+// ============================================================
+function generatePDF() {
+  const doc = buildPDF();
+  const filename = getPdfFilename();
+
+  // Ouvrir le PDF dans un nouvel onglet pour le visualiser
+  const blobUrl = doc.output('bloburl');
+  window.open(blobUrl, '_blank');
+
+  // Aussi le télécharger
+  doc.save(filename);
+
+  showToast('📄 PDF généré et ouvert !');
+}
+
+// ============================================================
+// BOUTON 2 : Ouvrir le mail avec destinataire + objet + corps
+// ============================================================
+function generateEmail() {
+  const cbs = document.querySelectorAll('#emailCheckboxes input[type="checkbox"]:checked');
+  let emails = Array.from(cbs).map(cb => cb.value);
+  if (emails.length === 0) {
+    const club = CLUBS_RAW.find(c => c.city === v('equipeLocale'));
+    if (club?.emails.length) emails = [club.emails[0].email];
+    else { showToast('⚠️ Sélectionnez une équipe locale'); return; }
+  }
+
+  // Générer et télécharger le PDF
+  const doc = buildPDF();
+  const pdfFilename = getPdfFilename();
+  doc.save(pdfFilename);
+
+  // Préparer le contenu du mail
+  const dateStr = formatDateFR(v('matchDate'));
+  const catLabel = TARIFS[v('categorie')]?.label || v('categorie');
+  const posLabel = v('position') === 'head' ? 'Arbitre Principal' : v('position') === 'ligne' ? 'Juge de Ligne' : 'Arbitre';
+  const subject = `Note de Frais Arbitre - ${v('equipeLocale')} vs ${v('equipeVisiteuse')} - ${dateStr} - ${catLabel}`;
+  const body = `Bonjour,\n\nVeuillez trouver ci-jointe ma note de frais pour le match :\n\nMatch : ${v('equipeLocale')} vs ${v('equipeVisiteuse')}\nDate : ${dateStr} à ${v('matchTime')||'—'}\nLieu : ${v('matchLieu')}\nCatégorie : ${catLabel}\nPosition : ${posLabel}\n\nArbitre : ${v('prenom')} ${v('nom')}\nN° de licence : ${v('licence')}\n\nIndemnité de match : ${currentFee} €${parseInt(v('indemniteGD'))>0?`\nIndemnité Grand Déplacement : ${v('indemniteGD')} €`:''}\nTotal : ${getTotal()} €\n\nCoordonnées bancaires :\nIBAN : ${v('iban')}\nBIC : ${v('bic')}\n\nCordialement,\n${v('prenom')} ${v('nom')}\n${v('email')}`;
+
+  // Aperçu
+  const preview = document.getElementById('emailPreview');
+  preview.innerHTML = `<div class="email-to">📧 À : ${emails.join(' ; ')}</div><div class="email-to">📝 Objet : ${subject}</div><div class="email-to">📎 PJ à joindre : ${pdfFilename}</div>${body}`;
+  document.getElementById('emailPreviewContainer').style.display = 'block';
+
+  // Ouvrir le client mail avec tout pré-rempli
+  window.location.href = `mailto:${emails.join(',')}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  showToast('📄 PDF téléchargé + ✉️ Mail ouvert !');
+}
+
+// ============================================================
+// UTILS
+// ============================================================
+function v(id) { return document.getElementById(id)?.value || ''; }
+function formatDateFR(d) { if (!d) return ''; const [y,m,day] = d.split('-'); return `${day}/${m}/${y}`; }
+function showToast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500); }
+</script>
+</body>
+</html>
