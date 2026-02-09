@@ -337,25 +337,18 @@
         <label>Catégorie</label>
         <select id="categorie" onchange="updateFee()">
           <option value="">Sélectionner...</option>
-          <optgroup label="Championnats Pro">
+          <optgroup label="Championnats">
             <option value="SLM">Ligue Magnus</option>
             <option value="D1">Division 1</option>
             <option value="D2">Division 2</option>
-            <option value="D2_PO">Division 2 (PlayOffs)</option>
-            <option value="D3">Division 3 (2 arb.)</option>
-            <option value="D3_PO">Division 3 (3 arb. PlayOffs)</option>
+            <option value="D3">Division 3</option>
           </optgroup>
-          <optgroup label="Championnats Jeunes / Féminin">
-            <option value="U20">U20 / U18 structure</option>
-            <option value="U20_CF">U20 / U18 CF (finale)</option>
-            <option value="U15">U15 / Féminin (2 arb.)</option>
-          </optgroup>
-          <optgroup label="Désignations Club">
-            <option value="FEM_LOISIR">Féminin / Loisirs / Trophée Fédéral (50€)</option>
-            <option value="PARA_U15_3X3">Para / U15 / 3x3 (30€)</option>
-            <option value="U13">U13 (25€)</option>
-            <option value="U11">U11 (22€)</option>
-            <option value="U9">U9 (20€)</option>
+          <optgroup label="Jeunes / Féminin / Para">
+            <option value="U20">U20</option>
+            <option value="U18">U18</option>
+            <option value="U15">U15</option>
+            <option value="FEM">Féminin</option>
+            <option value="PARA_hockey">Para-hockey</option>
           </optgroup>
           <optgroup label="Autres">
             <option value="AMICAL">Amical</option>
@@ -612,22 +605,17 @@ const CLUBS_RAW = [
 ].sort((a, b) => a.city.localeCompare(b.city, 'fr'));
 
 const TARIFS = {
-  SLM:        { head: 575, ligne: 450, seul: 575, gd: 150, gdMax: 300, label: "Ligue Magnus" },
-  D1:         { head: 425, ligne: 300, seul: 425, gd: 100, gdMax: 200, label: "D1" },
-  D2:         { head: 350, ligne: 250, seul: 350, gd: 100, gdMax: 0,   label: "D2" },
-  D2_PO:      { head: 350, ligne: 250, seul: 350, gd: 0,   gdMax: 200, label: "D2 PlayOffs" },
-  D3:         { head: 0,   ligne: 0,   seul: 250, gd: 100, gdMax: 200, label: "D3 (2 arb.)" },
-  D3_PO:      { head: 295, ligne: 210, seul: 295, gd: 100, gdMax: 200, label: "D3 PlayOffs (3 arb.)" },
-  U20:        { head: 200, ligne: 140, seul: 200, gd: 100, gdMax: 0,   label: "U20/U18 structure" },
-  U20_CF:     { head: 200, ligne: 140, seul: 200, gd: 100, gdMax: 0,   label: "U20/U18 CF finale" },
-  U15:        { head: 0,   ligne: 0,   seul: 110, gd: 100, gdMax: 0,   label: "U15/Féminin (2 arb.)" },
-  FEM_LOISIR: { head: 50,  ligne: 50,  seul: 50,  gd: 0,   gdMax: 0,   label: "Fém/Loisirs/TF" },
-  PARA_U15_3X3:{ head: 30, ligne: 30,  seul: 30,  gd: 0,   gdMax: 0,   label: "Para/U15/3x3" },
-  U13:        { head: 25,  ligne: 25,  seul: 25,  gd: 0,   gdMax: 0,   label: "U13" },
-  U11:        { head: 22,  ligne: 22,  seul: 22,  gd: 0,   gdMax: 0,   label: "U11" },
-  U9:         { head: 20,  ligne: 20,  seul: 20,  gd: 0,   gdMax: 0,   label: "U9" },
-  AMICAL:     { head: 0,   ligne: 0,   seul: 0,   gd: 0,   gdMax: 0,   label: "Amical" },
-  CDF:        { head: 0,   ligne: 0,   seul: 0,   gd: 0,   gdMax: 0,   label: "Coupe de France" },
+  SLM:        { head: 575, ligne: 450, seul: 0, gd: 150, gdMax: 300, label: "Ligue Magnus" },
+  D1:         { head: 425, ligne: 300, seul: 0, gd: 100, gdMax: 200, label: "D1" },
+  D2:         { head: 350, ligne: 250, seul: 0, gd: 100, gdMax: 200, label: "D2" },
+  D3:         { head: 295, ligne: 210, seul: 250, gd: 100, gdMax: 200, label: "D3" },
+  U20:        { head: 200, ligne: 140, seul: 110, gd: 100, gdMax: 0, label: "U20" },
+  U18:        { head: 200, ligne: 140, seul: 110, gd: 100, gdMax: 0, label: "U18" },
+  U15:        { head: 200, ligne: 140, seul: 110, gd: 100, gdMax: 0, label: "U15" },
+  FEM:        { head: 200, ligne: 140, seul: 110, gd: 100, gdMax: 0, label: "Féminin" },
+  PARA_hockey:{ head: 0, ligne: 0, seul: 110, gd: 100, gdMax: 0, label: "Para-hockey" },
+  AMICAL:     { head: 0, ligne: 0, seul: 0, gd: 0, gdMax: 0, label: "Amical" },
+  CDF:        { head: 0, ligne: 0, seul: 0, gd: 0, gdMax: 0, label: "Coupe de France" },
 };
 
 // ============================================================
