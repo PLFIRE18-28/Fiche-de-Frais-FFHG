@@ -885,7 +885,7 @@ function generateEmail() {
   const posLabel = v('position') === 'head' ? 'Arbitre Principal' : v('position') === 'ligne' ? 'Juge de Ligne' : 'Arbitre';
   const matchFee = parseInt(document.getElementById('feeInput').value) || 0;
   const subject = `Note de Frais Arbitre - ${v('equipeLocale')} vs ${v('equipeVisiteuse')} - ${dateStr} - ${catLabel}`;
-  const body = `Bonjour,\n\nVeuillez trouver ci-jointe ma note de frais pour le match :\n\nMatch : ${v('equipeLocale')} vs ${v('equipeVisiteuse')}\nDate : ${dateStr} à ${v('matchTime')||'—'}\nLieu : ${v('matchLieu')}\nCatégorie : ${catLabel}\nPosition : ${posLabel}\n\nArbitre : ${v('prenom')} ${v('nom')}\nN° de licence : ${v('licence')}\n\nIndemnité de match : ${matchFee} €${parseInt(v('indemniteGD'))>0?`\nIndemnité Grand Déplacement : ${v('indemniteGD')} €`:''}\nTotal : ${getTotal()} €\n\nCoordonnées bancaires :\nIBAN : ${v('iban')}\nBIC : ${v('bic')}\n\nCordialement,\n${v('prenom')} ${v('nom')}\n${v('email')}`;
+  const body = `Bonjour,\n\nConformément au processus numérique d'indemnisation des arbitres, je vous prie de bien vouloir trouver ci-joint ma note d'arbitrage pour le match ${catLabel} ${v('equipeLocale')} vs ${v('equipeVisiteuse')} du ${dateStr}.\n\n{JOINDRE PDF}\n\nVous souhaitant bonne réception,\n\nBien cordialement,\n${v('prenom')} ${v('nom')}`;
 
   // Aperçu
   const preview = document.getElementById('emailPreview');
