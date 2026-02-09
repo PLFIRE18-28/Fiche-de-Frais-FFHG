@@ -741,7 +741,7 @@ function updateFee() {
   let base = tarif[pos] || 0;
   currentFee = base;
   document.getElementById('feeInput').value = currentFee;
-  document.getElementById('feeDetail').textContent = tarif.label + ' · Modifiable si besoin';
+  document.getElementById('feeDetail').textContent = tarif.label;
 }
 
 function getTotal() { return (parseInt(document.getElementById('feeInput').value) || 0) + (parseInt(document.getElementById('indemniteGD').value) || 0); }
