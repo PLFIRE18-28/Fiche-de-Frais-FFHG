@@ -438,11 +438,11 @@
     <div class="section-title">Signature</div>
     <div class="row">
       <div class="field">
-        <label>Fait à</label>
+        <label>Fait à <span class="hint">= lieu du match</span></label>
         <input type="text" id="signVille" placeholder="Ville" readonly style="background:#f0f2f5;cursor:not-allowed;">
       </div>
       <div class="field">
-        <label>Le</label>
+        <label>Le <span class="hint">= date du match</span></label>
         <input type="date" id="signDate" readonly style="background:#f0f2f5;cursor:not-allowed;">
       </div>
     </div>
@@ -741,7 +741,7 @@ function updateFee() {
   let base = tarif[pos] || 0;
   currentFee = base;
   document.getElementById('feeInput').value = currentFee;
-  document.getElementById('feeDetail').textContent = tarif.label;
+  document.getElementById('feeDetail').textContent = tarif.label + ' · Modifiable si besoin';
 }
 
 function getTotal() { return (parseInt(document.getElementById('feeInput').value) || 0) + (parseInt(document.getElementById('indemniteGD').value) || 0); }
@@ -879,11 +879,6 @@ function generateEmail() {
     else { showToast('⚠️ Sélectionnez une équipe locale'); return; }
   }
 
-  // Générer et télécharger le PDF
-  const doc = buildPDF();
-  const pdfFilename = getPdfFilename();
-  doc.save(pdfFilename);
-
   // Préparer le contenu du mail
   const dateStr = formatDateFR(v('matchDate'));
   const catLabel = TARIFS[v('categorie')]?.label || v('categorie');
@@ -894,12 +889,12 @@ function generateEmail() {
 
   // Aperçu
   const preview = document.getElementById('emailPreview');
-  preview.innerHTML = `<div class="email-to">📧 À : ${emails.join(' ; ')}</div><div class="email-to">📝 Objet : ${subject}</div><div class="email-to">📎 PJ à joindre : ${pdfFilename}</div>${body}`;
+  preview.innerHTML = `<div class="email-to">📧 À : ${emails.join(' ; ')}</div><div class="email-to">📝 Objet : ${subject}</div>${body}`;
   document.getElementById('emailPreviewContainer').style.display = 'block';
 
   // Ouvrir le client mail avec tout pré-rempli
   window.location.href = `mailto:${emails.join(',')}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-  showToast('📄 PDF téléchargé + ✉️ Mail ouvert !');
+  showToast('✉️ Mail ouvert !');
 }
 
 // ============================================================
